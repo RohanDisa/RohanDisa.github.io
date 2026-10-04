@@ -1,0 +1,31 @@
+---
+interface Props {
+  type: 'plan' | 'tool_call' | 'observe' | 'result';
+  text: string;
+  timestamp?: string;
+}
+
+const { type, text, timestamp } = Astro.props;
+
+const badge = {
+  plan: 'text-muted border-border',
+  tool_call: 'text-accent-2 border-accent-2',
+  observe: 'text-warn border-warn',
+  result: 'text-accent border-accent',
+} as const;
+---
+
+<div class="grid grid-cols-[auto_auto_minmax(0,1fr)] items-baseline gap-x-3 gap-y-1 py-1.5 text-sm">
+  <span class="text-muted font-mono text-xs tabular-nums">
+    {timestamp ?? ''}
+  </span>
+  <span
+    class:list={[
+      'inline-flex rounded border px-1.5 py-0.5 font-mono text-xs',
+      badge[type],
+    ]}
+  >
+    {type}
+  </span>
+  <p class="text-text min-w-0">{text}</p>
+</div>

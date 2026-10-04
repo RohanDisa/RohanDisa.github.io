@@ -1,0 +1,27 @@
+- id: langchain-aws-826
+  repo: langchain-aws
+  pr: 826
+  url: https://github.com/langchain-ai/langchain-aws/pull/826
+  summary: Fixed a state-merging bug in the Bedrock Converse API where initialization- and invocation-level configs collided, producing duplicate keys and schema violations.
+  status: merged
+
+- id: langchain-34919
+  repo: langchain
+  pr: 34919
+  url: https://github.com/langchain-ai/langchain/pull/34919
+  summary: Deprecated Live Search in the ChatXAI integration with a backward-compatible migration path, preventing breakage against xAI's updated tools API.
+  status: merged
+
+- id: langchain-34080
+  repo: langchain
+  pr: 34080
+  url: https://github.com/langchain-ai/langchain/pull/34080
+  summary: Optimized the HTMLSemanticPreservingSplitter with reversed iteration for element processing, keeping semantic structure during document segmentation.
+  status: merged
+
+- id: xarray-sql-76
+  repo: xarray-sql
+  pr: 76
+  url: https://github.com/xarray-contrib/xarray-sql/pull/76
+  summary: Migrated the test suite from unittest to pytest, shipped in v0.2.0.
+  status: merged

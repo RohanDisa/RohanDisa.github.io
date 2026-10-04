@@ -1,0 +1,22 @@
+---
+interface Props {
+  index: string;
+  title: string;
+  heading?: boolean;
+}
+
+const { index, title, heading = false } = Astro.props;
+const classes = 'text-muted font-mono text-xs font-normal tracking-eyebrow uppercase';
+---
+
+{
+  heading ? (
+    <h2 class={classes}>
+      {index} / {title}
+    </h2>
+  ) : (
+    <p class={classes}>
+      {index} / {title}
+    </p>
+  )
+}

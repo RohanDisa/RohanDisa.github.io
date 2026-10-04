@@ -1,0 +1,36 @@
+---
+title: CPU Inference Engine
+tagline: 9.3x decode on Llama 3.2 1B, reaching 56 to 73% of STREAM bandwidth.
+lane: systems
+period: ''
+order: 6
+featured: false
+stack:
+  - C++17
+  - AVX2
+  - OpenMP
+  - GGUF
+metrics:
+  - value: 9.3x
+    label: decode on Llama 3.2 1B
+  - value: 56 to 73%
+    label: of STREAM bandwidth
+links:
+  github: https://github.com/RohanDisa/agent-serve
+---
+
+## Problem
+
+CPU decode needs to turn compute into tokens without leaving bandwidth on the table. Prefill and decode sit on opposite sides of the roofline: prefill amortizes weight reads across many tokens, while decode rereads every weight for every token.
+
+## Approach
+
+A from-scratch C++17 Llama engine with separate `prefill` and `decode` paths, AVX2 kernels, OpenMP threading, and GGUF models. Decode is scored against a measured read-only STREAM ceiling for the machine, not a datasheet peak.
+
+## Key decisions
+
+SIMD and threading help prefill more than decode, because faster compute saturates memory with fewer threads. Cache blocking did not help decode and hurt short-prompt prefill. A mixed Q4 GGUF decoded slower than Q8_0 because Q4_1 and Q6_K tensors fell back to a scalar dequant path and left the memory-bound regime.
+
+## Results
+
+Best public figure: 9.3x decode on Llama 3.2 1B Q8_0 versus the scalar single-thread baseline, at 73% of the STREAM ceiling. Across the reported models, decode reached 56 to 73% of that ceiling.

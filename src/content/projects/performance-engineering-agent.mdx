@@ -1,0 +1,101 @@
+---
+title: Performance-engineering agent (Ampere, Jun to Aug 2026)
+tagline: 'Performance engineering at Ampere, two ways: an agent for RCA on real hardware, plus case studies on inference and networking.'
+lane: agents
+period: Jun 2026 to Aug 2026
+order: 1
+featured: true
+stack:
+  - MCP
+  - Python
+  - SSH
+  - LLM-as-a-Judge
+metrics:
+  - value: 80%
+    label: less manual analysis
+  - value: 30+
+    label: hrs/week saved
+  - value: 88%
+    label: LLM-judge agreement
+  - value: '0.81'
+    label: "Cohen's kappa"
+links: {}
+interactive: trace-replay
+---
+
+## Problem
+
+Performance analysis on real hardware was eating a large share of engineering time. The goal was to cut that manual work and still produce root-cause findings a performance engineer could trust.
+
+The public result is 80% less manual analysis (30+ hrs/week).
+
+## Approach
+
+Performance engineering at Ampere, two ways: I built an agent that does root-cause analysis on real hardware (five CLI profilers over SSH through an async MCP server, with performance playbooks turned into executable skills), and I worked on and supported hands-on case studies across LLM inference, recommendation models and network regressions.
+
+The public architecture is generic: agent and skill system to async MCP server to SSH to one runner machine driving several systems under test.
+
+This is an internal project. The page stays at resume-level detail. It does not include internal tool or host names, real screenshots or logs, prompts, unreleased hardware, customer details, or code. Trace replays on this page are illustrative and labeled as such.
+
+<svg viewBox="0 0 720 120" role="img" aria-label="Agent and skill system to async MCP server to SSH to one runner driving several systems under test">
+  <title>Ampere agent architecture</title>
+  <rect x="8" y="28" width="150" height="64" rx="8" fill="none" stroke="currentColor" />
+  <text x="83" y="66" text-anchor="middle" font-size="12" fill="currentColor">Agent + skills</text>
+  <path d="M158 60 H198" stroke="currentColor" fill="none" />
+  <rect x="198" y="28" width="150" height="64" rx="8" fill="none" stroke="currentColor" />
+  <text x="273" y="66" text-anchor="middle" font-size="12" fill="currentColor">Async MCP</text>
+  <path d="M348 60 H388" stroke="currentColor" fill="none" />
+  <rect x="388" y="28" width="90" height="64" rx="8" fill="none" stroke="currentColor" />
+  <text x="433" y="66" text-anchor="middle" font-size="12" fill="currentColor">SSH</text>
+  <path d="M478 60 H518" stroke="currentColor" fill="none" />
+  <rect x="518" y="28" width="194" height="64" rx="8" fill="none" stroke="currentColor" />
+  <text x="615" y="58" text-anchor="middle" font-size="12" fill="currentColor">One runner</text>
+  <text x="615" y="76" text-anchor="middle" font-size="11" fill="currentColor">several systems under test</text>
+</svg>
+
+## Key decisions
+
+Playbooks became executable skills, so the agent could run a known performance method instead of improvising each time.
+
+Evaluation used LLM-as-a-Judge over a 200-sample golden dataset of multi-turn trajectories. Agreement with expert assessments was 88%, with Cohen's kappa 0.81.
+
+## Results
+
+The case studies below were worked on or supported using the agent alongside hands-on profiling with hardware counters, roofline reasoning and controlled experiments. Each is a method-plus-finding narrative. No figures. Trace replays of these stories, if shown, are illustrative.
+
+### Llama token generation
+
+The agent compared instruction counts and memory-stall behavior across implementations, ruled out a slow library as the cause, and pointed to kernel and prefetch changes that improved batched throughput.
+
+<aside>
+<p>Illustrative trace. Not a real log.</p>
+<TraceLine type="plan" text="Compare instruction counts and memory-stall behavior across implementations." />
+<TraceLine type="observe" text="Slow library ruled out as the cause." />
+<TraceLine type="result" text="Kernel and prefetch changes improved batched throughput." />
+</aside>
+
+### DLRM
+
+Per-function PMU analysis widened coverage of the hot kernels enough to attribute most of the throughput gap to ineffective L2 hardware prefetching.
+
+<aside>
+<p>Illustrative trace. Not a real log.</p>
+<TraceLine type="tool_call" text="Per-function PMU on the hot kernels." />
+<TraceLine type="observe" text="Coverage of the hot path widened." />
+<TraceLine type="result" text="Most of the throughput gap attributed to ineffective L2 hardware prefetching." />
+</aside>
+
+### Envoy regression across Linux kernel versions
+
+Cross-NIC reproduction and zero-copy experiments with iperf isolated a slowdown to virtio-net and identified the responsible kernel commit.
+
+<aside>
+<p>Illustrative trace. Not a real log.</p>
+<TraceLine type="tool_call" text="Reproduce across NICs and run zero-copy iperf experiments." />
+<TraceLine type="observe" text="Slowdown isolated to virtio-net." />
+<TraceLine type="result" text="Responsible kernel commit identified." />
+</aside>
+
+## What I'd do next
+
+The project is internal, so this page stays at resume-level detail and does not add unreleased hardware, customer, or implementation specifics.

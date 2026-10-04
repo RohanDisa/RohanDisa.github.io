@@ -1,0 +1,38 @@
+---
+title: Computer-Use Automation System
+tagline: Model explores once, then runs from a typed capability artifact with human handoff.
+lane: agents
+period: ''
+order: 5
+featured: false
+stack:
+  - Python
+  - CDP browser control
+metrics:
+  - value: once
+    label: explore pass
+  - value: typed
+    label: capability artifact
+  - value: human
+    label: handoff
+links:
+  github: https://github.com/RohanDisa/computer-use-agent
+---
+
+## Problem
+
+A computer-use agent that keeps a model in the loop on every run is expensive and hard to review. It needs a path from one exploration to a repeatable run, plus a way to pause when the page drifts.
+
+## Approach
+
+The model explores once and records a typed, versioned capability artifact. Later runs execute that artifact with no model. When a run cannot proceed, it pauses and hands the live browser session to a human over CDP.
+
+The artifact is a reviewable JSON document, not a transcript. It declares parameters, outputs, per-step risk, and machine-checkable checkpoints. Replay imports no LLM client; a test enforces that.
+
+## Key decisions
+
+Locators are a ladder: role and accessible name first, CSS path last. Fingerprints detect a selector that still matches but lands on a different element. All actions pass one driver choke point for allowlist, risk policy, and a control token so a human and the engine never compete for input.
+
+## Results
+
+The public design claim is the explore-once, replay-from-artifact loop with human handoff. The reference ParaBank capability and the offline fixture suite live in the repo.

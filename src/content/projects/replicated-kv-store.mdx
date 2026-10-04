@@ -1,0 +1,118 @@
+---
+title: Replicated KV store on Raft (C++)
+tagline: A linearizable key/value service on my own Raft implementation in C++ and gRPC, with exactly-once semantics and a benchmark suite.
+lane: systems
+period: Jan 2026 to Apr 2026
+order: 4
+featured: true
+stack:
+  - C++
+  - gRPC
+  - Raft
+  - RocksDB
+  - Docker
+metrics:
+  - value: 3 nodes
+    label: consistent across 50k writes
+  - value: linearizable
+    label: single-copy behavior
+  - value: exactly-once
+    label: under retries
+  - value: '~12k'
+    label: writes/sec single node
+links: {}
+interactive: raft-sim
+---
+
+Private repo, code walkthrough on request. The teaching Raft visualization on this page is not the C++ implementation.
+
+## Problem
+
+Build a key/value service that behaves like a single copy of the data (linearizable) while running on several machines, keeps working when a minority fails, and never applies a retried request twice. Then make it fast.
+
+Period: Jan to Feb 2026, with the replicated service and benchmarking work continuing into April 2026. Stack beyond the card: Protocol Buffers, Docker Compose, OpenTelemetry, CMake, and Python/matplotlib for plots.
+
+## Approach
+
+Each node is one process running three gRPC services: Raft peer RPCs on port P, the client-facing KV service on port P+1000, and a control service for fault injection in tests. Nodes share no state and communicate only through the replicated log.
+
+<svg viewBox="0 0 720 200" role="img" aria-label="Each node runs Raft peer RPCs on port P, KV on port P plus 1000, and a control service, with a replicated log between nodes">
+  <title>Node architecture</title>
+  <rect x="40" y="16" width="200" height="168" rx="10" fill="none" stroke="currentColor" />
+  <text x="140" y="40" text-anchor="middle" font-size="13" fill="currentColor">Node A</text>
+  <rect x="60" y="56" width="160" height="32" rx="6" fill="none" stroke="currentColor" />
+  <text x="140" y="77" text-anchor="middle" font-size="11" fill="currentColor">Raft peers :P</text>
+  <rect x="60" y="96" width="160" height="32" rx="6" fill="none" stroke="currentColor" />
+  <text x="140" y="117" text-anchor="middle" font-size="11" fill="currentColor">KV :P+1000</text>
+  <rect x="60" y="136" width="160" height="32" rx="6" fill="none" stroke="currentColor" />
+  <text x="140" y="157" text-anchor="middle" font-size="11" fill="currentColor">Control</text>
+  <rect x="260" y="80" width="200" height="40" rx="8" fill="none" stroke="currentColor" />
+  <text x="360" y="105" text-anchor="middle" font-size="12" fill="currentColor">Replicated log</text>
+  <rect x="480" y="16" width="200" height="168" rx="10" fill="none" stroke="currentColor" />
+  <text x="580" y="40" text-anchor="middle" font-size="13" fill="currentColor">Node B</text>
+  <rect x="500" y="56" width="160" height="32" rx="6" fill="none" stroke="currentColor" />
+  <text x="580" y="77" text-anchor="middle" font-size="11" fill="currentColor">Raft peers :P</text>
+  <rect x="500" y="96" width="160" height="32" rx="6" fill="none" stroke="currentColor" />
+  <text x="580" y="117" text-anchor="middle" font-size="11" fill="currentColor">KV :P+1000</text>
+  <rect x="500" y="136" width="160" height="32" rx="6" fill="none" stroke="currentColor" />
+  <text x="580" y="157" text-anchor="middle" font-size="11" fill="currentColor">Control</text>
+</svg>
+
+`KvService` exposes `Put(key, value)`, `Append(key, arg)` (acts as Put if the key is missing) and `Get(key)` (empty string if missing). Every request carries a `client_id` (64-bit) and a `seq_num`. Responses return `KV_SUCCESS`, `KV_NOTLEADER` or `KV_TIMEOUT`. The client library discovers the leader automatically and retries on `KV_NOTLEADER` or timeouts.
+
+The consensus core is a from-scratch Raft: leader election with randomized timeouts, AppendEntries log replication with consistency checks, majority-based commit, and an apply queue (`MessageQueue<ApplyResult>`) that delivers committed entries in log order.
+
+<RaftSimBlock />
+
+The request path is propose, then commit, then apply, then respond. The RPC handler serializes the operation (type, key, value, client ID, sequence number) and calls `propose()`, which returns the log index the entry should occupy. The handler blocks on a waiter for that index. A dedicated apply thread drains the queue, executes each entry against the in-memory map, and wakes the waiter for its index. If a different entry commits at that index (leadership changed), the handler reports `KV_NOTLEADER` and the client retries. If nothing commits in time, it returns `KV_TIMEOUT`.
+
+<svg viewBox="0 0 720 220" role="img" aria-label="Sequence of propose, commit, apply, and respond on the request path">
+  <title>Request path</title>
+  <text x="80" y="28" text-anchor="middle" font-size="12" fill="currentColor">Client</text>
+  <text x="260" y="28" text-anchor="middle" font-size="12" fill="currentColor">KV RPC</text>
+  <text x="460" y="28" text-anchor="middle" font-size="12" fill="currentColor">Raft log</text>
+  <text x="640" y="28" text-anchor="middle" font-size="12" fill="currentColor">Apply thread</text>
+  <path d="M80 48 V200" stroke="currentColor" fill="none" />
+  <path d="M260 48 V200" stroke="currentColor" fill="none" />
+  <path d="M460 48 V200" stroke="currentColor" fill="none" />
+  <path d="M640 48 V200" stroke="currentColor" fill="none" />
+  <path d="M80 70 H260" stroke="currentColor" fill="none" />
+  <text x="170" y="64" text-anchor="middle" font-size="11" fill="currentColor">Put / Append / Get</text>
+  <path d="M260 100 H460" stroke="currentColor" fill="none" />
+  <text x="360" y="94" text-anchor="middle" font-size="11" fill="currentColor">propose() index</text>
+  <path d="M460 130 H640" stroke="currentColor" fill="none" />
+  <text x="550" y="124" text-anchor="middle" font-size="11" fill="currentColor">commit in order</text>
+  <path d="M640 160 H260" stroke="currentColor" fill="none" />
+  <text x="450" y="154" text-anchor="middle" font-size="11" fill="currentColor">wake waiter</text>
+  <path d="M260 190 H80" stroke="currentColor" fill="none" />
+  <text x="170" y="184" text-anchor="middle" font-size="11" fill="currentColor">SUCCESS / NOTLEADER / TIMEOUT</text>
+</svg>
+
+## Key decisions
+
+Exactly-once semantics follow the RIFL pattern. The server keeps a per-client record of the latest sequence number and its result. Duplicates are detected when the entry is applied, not when it arrives, so every replica makes the same decision from the same log and a retried Append is never applied twice. The cached result is returned to the retrying client.
+
+Gets are ordered through consensus, so a leader that has been partitioned from the majority cannot answer from its local copy. It times out with `KV_TIMEOUT` instead of returning old data.
+
+Durability is RocksDB-backed persistent storage. A Docker Compose setup runs a multi-node cluster locally.
+
+## Results
+
+Verified with a correctness suite plus hidden fault scenarios: basic operations, concurrent clients, linearizability checks under concurrent access, leader crash and re-election mid-workload, network partitions, and unreliable networks that drop and reorder messages.
+
+OpenTelemetry spans around propose, replication and apply were used to see where request latency goes before and after tuning.
+
+Benchmark tooling was built from scratch:
+
+- `latency`: a closed-loop client that spins up a 3-node cluster and issues 1,000 sequential writes, reporting average, p50 and p99 latency.
+- `tput <maxClients> <putRatio>`: for client counts 1, 2, 4, 8 and up, starts a fresh cluster, pre-populates `key_1` to `key_1000`, runs N threads of 1,000 synchronous ops each with uniformly random keys and the chosen read/write mix, and records throughput plus avg/p50/p90/p99 latency to `result.txt`.
+- `lat-tput.py`: parses the results and plots latency (avg, p50, p90, p99) against throughput.
+- Compared 3-node and 5-node clusters to show the cost of a larger quorum on write latency and throughput.
+
+Tuned against a standardized benchmark run on identical hardware alongside peer implementations, on three metrics: median unloaded Put latency, and peak throughput with 64 concurrent clients at 50/50 and 90/10 read/write mixes. Any correctness regression disqualified a result, so every optimization had to keep the full fault suite passing.
+
+Public chips: 3 nodes consistent across 50k writes, about 12k writes/sec on a single node, linearizable, exactly-once.
+
+## What I'd do next
+
+If the latency-throughput plots are recovered, add them under the benchmark tooling.

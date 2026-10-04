@@ -1,0 +1,22 @@
+---
+interface Props {
+  lane: 'agents' | 'systems' | 'ml';
+}
+
+const { lane } = Astro.props;
+
+const tone = {
+  agents: 'text-accent border-accent',
+  systems: 'text-warn border-warn',
+  ml: 'text-accent-2 border-accent-2',
+} as const;
+---
+
+<span
+  class:list={[
+    'inline-flex rounded-md border px-1.5 py-0.5 font-mono text-xs tracking-eyebrow uppercase',
+    tone[lane],
+  ]}
+>
+  {lane}
+</span>

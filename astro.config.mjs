@@ -11,6 +11,6 @@ export default defineConfig({
   output: 'static',
   integrations: [mdx(), preact(), sitemap()],
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [/** @type {any} */ (tailwindcss())],
   },
 });

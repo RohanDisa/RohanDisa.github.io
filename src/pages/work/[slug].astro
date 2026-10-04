@@ -1,0 +1,137 @@
+---
+import Base from '../../layouts/Base.astro';
+import RaftSimBlock from '../../components/RaftSimBlock.astro';
+import LaneTag from '../../components/ui/LaneTag.astro';
+import MetricChip from '../../components/ui/MetricChip.astro';
+import TraceLine from '../../components/ui/TraceLine.astro';
+import { getProjects, missingRepoLabel, projectHref, type Project } from '../../lib/content';
+import { render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: { project, projects },
+  }));
+}
+
+interface Props {
+  project: Project;
+  projects: Project[];
+}
+
+const { project, projects } = Astro.props;
+const { Content } = await render(project);
+const index = projects.findIndex((entry) => entry.id === project.id);
+const prev = index > 0 ? projects[index - 1] : undefined;
+const next = index < projects.length - 1 ? projects[index + 1] : undefined;
+const repoNote = missingRepoLabel(project);
+const pageTitle = `${project.data.title} · Rohan Disa`;
+---
+
+<Base title={pageTitle} description={project.data.tagline} ogImage={`/og/${project.id}.png`}>
+  <article class="min-w-0">
+    <p class="text-muted font-mono text-xs">
+      <a href="/work" class="text-accent no-underline">Work</a>
+      <span> / {project.id}</span>
+    </p>
+    <div class="mt-4 flex flex-wrap items-center gap-2">
+      <LaneTag lane={project.data.lane} />
+      {
+        project.data.period && (
+          <span class="text-muted font-mono text-xs">{project.data.period}</span>
+        )
+      }
+    </div>
+    <h1 class="text-text mt-4 text-3xl tracking-heading">{project.data.title}</h1>
+    <p class="text-muted mt-3 max-w-2xl">{project.data.tagline}</p>
+
+    <ul class="mt-5 flex flex-wrap gap-1.5">
+      {
+        project.data.stack.map((item) => (
+          <li class="border-border text-muted rounded-md border px-1.5 py-0.5 font-mono text-xs">
+            {item}
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="mt-4 flex flex-wrap gap-3 font-mono text-sm">
+      {
+        project.data.links.github ? (
+          <a
+            href={project.data.links.github}
+            class="text-accent no-underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub
+          </a>
+        ) : (
+          <span class="text-muted">{repoNote}</span>
+        )
+      }
+      {
+        project.data.links.writeup && (
+          <a
+            href={project.data.links.writeup}
+            class="text-accent no-underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Write-up
+          </a>
+        )
+      }
+      {
+        project.data.links.demo && (
+          <a
+            href={project.data.links.demo}
+            class="text-accent no-underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Demo
+          </a>
+        )
+      }
+    </div>
+
+    {
+      project.data.metrics.length > 0 && (
+        <div class="border-border bg-surface mt-8 flex flex-wrap gap-2 rounded-lg border p-4">
+          {project.data.metrics.map((metric) => (
+            <MetricChip value={metric.value} label={metric.label} />
+          ))}
+        </div>
+      )
+    }
+
+    <div class="case-study reveal mt-4">
+      <Content components={{ RaftSimBlock, TraceLine }} />
+    </div>
+
+    <nav class="border-border mt-16 flex flex-col gap-3 border-t pt-6 sm:flex-row sm:justify-between" aria-label="Adjacent projects">
+      {
+        prev ? (
+          <a href={projectHref(prev)} class="text-accent min-w-0 no-underline">
+            <span class="text-muted block font-mono text-xs">Previous</span>
+            <span class="break-words">{prev.data.title}</span>
+          </a>
+        ) : (
+          <span></span>
+        )
+      }
+      {
+        next ? (
+          <a href={projectHref(next)} class="text-accent min-w-0 no-underline sm:text-right">
+            <span class="text-muted block font-mono text-xs">Next</span>
+            <span class="break-words">{next.data.title}</span>
+          </a>
+        ) : (
+          <span></span>
+        )
+      }
+    </nav>
+  </article>
+</Base>

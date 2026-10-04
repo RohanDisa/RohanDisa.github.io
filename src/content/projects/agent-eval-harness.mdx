@@ -1,0 +1,53 @@
+---
+title: Agent Eval Harness
+tagline: Agents are stochastic, so one run proves nothing. This engine reruns each task N times and reports corrected statistical tests.
+lane: agents
+period: Apr 2026 to May 2026
+order: 2
+featured: true
+stack:
+  - Python
+  - pytest
+  - SciPy
+  - Docker
+metrics:
+  - value: '32'
+    label: task suite
+  - value: Wilson 95%
+    label: CIs on N reruns
+  - value: BH-corrected
+    label: statistical tests
+links:
+  github: https://github.com/RohanDisa/agent-eval-harness
+---
+
+## Problem
+
+Normal test suites assume the same input produces the same output. Agents violate that. The same task, run five times against the same model, can produce five different trajectories and three different outcomes. A single score cannot support a claim.
+
+The harness measures an agent under test. It never contains agent logic. It runs, observes, grades, and reports.
+
+## Approach
+
+A domain-agnostic engine reruns each task N times, reports confidence intervals, and grades with invariants, LLM-judge traces and corrected statistical tests. A task suite is a plugin. The engine never imports a concrete tool or a domain task type.
+
+The core suite has 32 tasks: multi-step file and data work, multi-tool use, retrieval against a local HTTP fixture, long-horizon runs, recovery when a tool is unavailable, refusal tasks whose correct behavior is to decline, and one SQL analytics task.
+
+## Key decisions
+
+Grading runs in four tiers. Each lower tier refines the picture; none can overturn the tier above it.
+
+- Tier 0 outcome graders decide success. All of a task's outcome graders must pass.
+- Tier 1 invariants run on every trace, including successes. They are pure functions of the trace. A correct answer that breaks a safety rule is a finding, not a pass.
+- Tier 2 golden divergence localizes a failure. It never flips success, because most tasks have several correct trajectories.
+- Tier 3 human review is a flag, not a gate, for runs the pipeline cannot localize.
+
+Rates use Wilson 95% intervals, not the normal approximation, because small n near 0 or 1 makes the normal interval collapse. Suite success rate is the unweighted mean of per-task rates, so a task with more attempts cannot dominate the headline.
+
+Regression detection uses a two-proportion test plus Benjamini-Hochberg. Comparing two runs across 32 tasks means 32 simultaneous tests; a naive p less than 0.05 manufactures false regressions. BH controls the false discovery rate. A task is flagged only when it is significant after correction and the point estimate dropped.
+
+Cost per completed task and cost per success are both reported, so an agent that looks cheap only because it fails fast is visible. Fault injection is seeded and classified by kind (timeout, 500, garbage), with burst mode for correlated outages.
+
+## Results
+
+Public chips: 32-task suite, Wilson 95% CIs on N reruns, and BH-corrected tests. Live model-versus-model numbers come from the harness HTML report after a run, not from a number baked into this page.

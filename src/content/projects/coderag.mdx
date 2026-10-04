@@ -1,0 +1,30 @@
+---
+title: CodeRAG
+tagline: A code indexer with embeddings, FAISS, and LLM Q&A.
+lane: ml
+period: ''
+order: 10
+featured: false
+stack:
+  - Python
+  - FAISS
+metrics:
+  - value: FAISS
+    label: code embeddings
+  - value: LLM
+    label: Q&A
+links:
+  github: https://github.com/RohanDisa/CodeRAG
+---
+
+## Problem
+
+Asking questions over a codebase needs an index, not a full-repo prompt. Functions and classes have to be retrieved before an LLM can answer from them.
+
+## Approach
+
+A Python indexer that extracts functions and classes, embeds them with UniXcoder, stores FAISS indices, and answers questions with an LLM over the retrieved context.
+
+## Results
+
+The public claim is the retrieve-then-read loop: embeddings, FAISS, and LLM Q&A. Retrieval accuracy numbers are not published on this page.

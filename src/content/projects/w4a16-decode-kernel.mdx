@@ -1,0 +1,38 @@
+---
+title: W4A16 Decode Kernel
+tagline: 41% of HBM bandwidth on T4, 4.1x over an uncoalesced baseline.
+lane: systems
+period: ''
+order: 7
+featured: false
+stack:
+  - CUDA
+  - PyTorch
+  - Nsight
+  - Modal
+metrics:
+  - value: 41%
+    label: of HBM bandwidth on T4
+  - value: 4.1x
+    label: over uncoalesced baseline
+links:
+  github: https://github.com/RohanDisa/decode-kernel
+---
+
+## Problem
+
+Decode is memory-bound. The ceiling is HBM bandwidth, not tensor cores, so a W4A16 GEMV has to move packed weights efficiently and dequantize in place.
+
+## Approach
+
+A hand-written W4A16 GEMV: 4-bit grouped weights, fp16 activations, fused dequantization, and no materialization of the fp16 weight matrix. Measured on Tesla T4 and A100 via Modal against a read-only STREAM roof, not a datasheet copy figure.
+
+## Key decisions
+
+The warp-per-row kernel was the win. Coalescing closed the gap to the uncoalesced one-thread-per-row baseline. Vectorized packed loads, shared-scale caching, Split-K, and compiler hints did not help.
+
+On the A100 shortfall (41% of the read roof on T4, 22% on A100), the warps-per-SM test ruled out memory-level parallelism. Dequantization cost is the leading remaining explanation, not yet confirmed with Nsight Compute, which is unavailable on Modal.
+
+## Results
+
+On 4096x4096, batch 1: 41% of measured HBM read bandwidth on T4, 4.1x over the uncoalesced baseline. The same 41% holds at 4096x11008, so the T4 result is not specific to a square shape.

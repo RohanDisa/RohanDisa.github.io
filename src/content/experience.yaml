@@ -1,0 +1,49 @@
+- id: ampere
+  company: Ampere Computing
+  role: AI Software Engineer Intern
+  location: Santa Clara, California
+  start: '2026-06'
+  end: '2026-08'
+  bullets:
+    - group: Agent
+      text: Designed an agent and modular skill system that directs a model for hands-free, end-to-end root-cause analysis of performance bottlenecks.
+      metric: 80% less analysis
+    - group: Agent
+      text: Built an asynchronous MCP server integrating five CLI tools plus performance utilities over SSH, so the agent can run code from one runner across several systems under test with automated error handling.
+      metric: 5 CLI tools
+    - group: Agent
+      text: Built an LLM-as-a-Judge evaluation over a 200-sample golden dataset of multi-turn trajectories, with 88% agreement with expert assessments.
+      metric: "Cohen's kappa 0.81"
+    - group: Performance engineering
+      text: Llama token generation. Compared instruction counts and memory-stall behavior across implementations, ruled out a slow library as the cause, and pointed to kernel and prefetch changes that improved batched throughput.
+    - group: Performance engineering
+      text: DLRM. Per-function PMU analysis widened coverage of the hot kernels enough to attribute most of the throughput gap to ineffective L2 hardware prefetching.
+    - group: Performance engineering
+      text: Envoy regression across Linux kernel versions. Cross-NIC reproduction and zero-copy experiments with iperf isolated a slowdown to virtio-net and identified the responsible kernel commit.
+
+- id: usc-its
+  company: USC Information Technology and Services
+  role: Software Engineer (part-time)
+  location: Los Angeles, California
+  start: '2025-07'
+  end: '2026-05'
+  bullets:
+    - text: Architected Node.js and Express backend services with MongoDB, integrating Shure APIs and REST endpoints for device and classroom data.
+      metric: 30+ hrs/week saved
+    - text: Cut backend memory usage from 16GB to 6GB by fixing a long-lived HTTP client leak and adding API pagination in the device-polling service.
+      metric: 16GB to 6GB
+    - text: Configured GitHub Actions and Docker CI/CD to automate builds, tests, and deployments across environments.
+
+- id: amogh
+  company: Amogh Data Innovations
+  role: Software Engineering Intern
+  location: Pune, India
+  start: '2024-07'
+  end: '2024-12'
+  bullets:
+    - text: Built a warehouse video pipeline using YOLO for box detection and GCP OCR for field extraction.
+      metric: 150+ videos/day
+    - text: Cut manual data entry by serving the pipeline as a Dockerized FastAPI service with async batch inference and confidence-based retries.
+      metric: 50% less entry
+    - text: Normalized PostgreSQL schemas for queryable extraction history across unique products.
+      metric: 200+ products

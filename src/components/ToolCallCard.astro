@@ -1,0 +1,101 @@
+---
+import LaneTag from './ui/LaneTag.astro';
+import MetricChip from './ui/MetricChip.astro';
+import { missingRepoLabel, projectHref, type Project } from '../lib/content';
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+const href = projectHref(project);
+const chips = project.data.metrics.slice(0, 3);
+const repoNote = missingRepoLabel(project);
+---
+
+<article
+  class="border-border bg-surface flex h-full min-w-0 flex-col gap-4 rounded-lg border p-4"
+>
+  <header class="flex items-start justify-between gap-3">
+    <a
+      href={href}
+      class="text-text min-w-0 font-mono text-sm break-all no-underline"
+    >
+      run_project("{project.id}")
+    </a>
+    <span class="bg-accent mt-1 size-2 shrink-0 rounded-full" aria-label="done"></span>
+  </header>
+
+  <div class="flex flex-wrap items-center gap-2">
+    <LaneTag lane={project.data.lane} />
+    {
+      project.data.period && (
+        <span class="text-muted font-mono text-xs">{project.data.period}</span>
+      )
+    }
+  </div>
+
+  <p class="text-muted line-clamp-2 text-sm">{project.data.tagline}</p>
+
+  {
+    chips.length > 0 && (
+      <div class="flex flex-wrap gap-2">
+        {chips.map((metric) => (
+          <MetricChip value={metric.value} label={metric.label} />
+        ))}
+      </div>
+    )
+  }
+
+  <ul class="flex flex-wrap gap-1.5">
+    {
+      project.data.stack.map((item) => (
+        <li class="border-border text-muted rounded-md border px-1.5 py-0.5 font-mono text-xs">
+          {item}
+        </li>
+      ))
+    }
+  </ul>
+
+  <div class="mt-auto flex flex-wrap items-center gap-3 font-mono text-xs">
+    <a href={href} class="text-accent no-underline">Open case</a>
+    {
+      project.data.links.github ? (
+        <a
+          href={project.data.links.github}
+          class="text-accent no-underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          GitHub
+        </a>
+      ) : (
+        <span class="text-muted">{repoNote}</span>
+      )
+    }
+    {
+      project.data.links.writeup && (
+        <a
+          href={project.data.links.writeup}
+          class="text-accent no-underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Write-up
+        </a>
+      )
+    }
+    {
+      project.data.links.demo && (
+        <a
+          href={project.data.links.demo}
+          class="text-accent no-underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Demo
+        </a>
+      )
+    }
+  </div>
+</article>

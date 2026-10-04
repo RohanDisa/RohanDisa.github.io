@@ -1,0 +1,42 @@
+---
+title: Capability Broker
+tagline: 'An authority layer that assumes the agent is already compromised: scoped credentials, deny-by-default policy, and mid-run revoke.'
+lane: agents
+period: Feb 2026 to Mar 2026
+order: 3
+featured: true
+stack:
+  - Go
+  - GitHub Actions
+metrics:
+  - value: 10/10
+    label: attacks blocked
+  - value: 0%
+    label: false positives
+  - value: '~170 ns'
+    label: policy checks
+links:
+  github: https://github.com/RohanDisa/agent-broker
+---
+
+## Problem
+
+An agent that can call tools is already a privilege boundary. Prompt injection has no reliable model-level fix. If the agent is compromised, a trusted runtime is the wrong model.
+
+The claim is precise: the broker does not stop injection. It assumes injection succeeds at the model level and stops the consequences through least privilege, provenance-aware policy, and egress control.
+
+## Approach
+
+An authority layer sits between the untrusted agent and the tools. The operator grants typed scopes. The agent asks to call a tool. The broker evaluates deny-by-default policy. On allow, it mints a scoped, short-lived, single-use credential for that one call. The tool executor verifies the credential independently. There is no standing token.
+
+Every decision, mint, execution, elevation, and revocation is appended to a SHA-256 hash chain. Authority can be revoked mid-run.
+
+## Key decisions
+
+Every control is proven load-bearing by ablation: turn that single control off, re-run, and the attack succeeds. The named layers are least privilege, resource scope, egress, single-use, signature, elevation, rate count, provenance, and revocation.
+
+The benign set includes a deliberately allowed borderline path, so a broker that blocks everything cannot hide behind a 100% attack score. Policy checks are about 170 ns.
+
+## Results
+
+From the rules-only attacker (`go run ./cmd/attacker`, no model): 10/10 attacks blocked, 0/8 false positives on benign cases. Each blocked attack maps to one named control, and each ablation lets that attack through.

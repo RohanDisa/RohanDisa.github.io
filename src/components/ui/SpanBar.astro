@@ -1,0 +1,21 @@
+---
+interface Props {
+  start: number;
+  end: number;
+  label: string;
+}
+
+const { start, end, label } = Astro.props;
+const width = Math.max(end - start, 2);
+---
+
+<div class="min-w-0">
+  <div class="bg-surface-2 relative h-3 w-full overflow-hidden rounded-sm" aria-hidden="true">
+    <div
+      class="bg-accent absolute top-0 h-full rounded-sm"
+      style={`left: ${start}%; width: ${width}%;`}
+    >
+    </div>
+  </div>
+  <span class="sr-only">{label}</span>
+</div>

@@ -1,0 +1,73 @@
+---
+import Base from '../../layouts/Base.astro';
+import ToolCallCard from '../../components/ToolCallCard.astro';
+import SectionEyebrow from '../../components/ui/SectionEyebrow.astro';
+import { getProjects } from '../../lib/content';
+
+const projects = await getProjects();
+
+const filters = [
+  { id: 'all', label: 'All', href: '/work' },
+  { id: 'agents', label: 'Agents', href: '/work?lane=agents' },
+  { id: 'systems', label: 'Systems', href: '/work?lane=systems' },
+  { id: 'ml', label: 'ML', href: '/work?lane=ml' },
+] as const;
+---
+
+<Base
+  title="Work · Rohan Disa"
+  description="Selected and supporting projects across agents, systems, and ML."
+  ogImage="/og/work.png"
+>
+  <section>
+    <SectionEyebrow index="01" title="Work" />
+    <h1 class="text-text mt-4 text-3xl">All projects</h1>
+    <p class="text-muted mt-3 max-w-2xl">
+      Filter by lane. The active filter lives in the URL so it can be shared.
+    </p>
+
+    <div class="mt-6 flex flex-wrap gap-2" role="navigation" aria-label="Lane filters">
+      {
+        filters.map((filter) => (
+          <a
+            href={filter.href}
+            data-filter={filter.id}
+            class="filter-chip border-border text-muted inline-flex rounded-md border px-3 py-1.5 font-mono text-xs no-underline"
+          >
+            {filter.label}
+          </a>
+        ))
+      }
+    </div>
+
+    <div class="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+      {
+        projects.map((project) => (
+          <div data-lane={project.data.lane} class="min-w-0">
+            <ToolCallCard project={project} />
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!--
+    GitHub Pages is static, so ?lane= cannot be applied at build time.
+    Every card is rendered. This script hides non-matching cards when a lane
+    query is present. With JavaScript disabled, all cards stay visible.
+  -->
+  <script is:inline>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var lane = params.get('lane') || 'all';
+      document.querySelectorAll('[data-lane]').forEach(function (card) {
+        card.hidden = lane !== 'all' && card.getAttribute('data-lane') !== lane;
+      });
+      document.querySelectorAll('[data-filter]').forEach(function (chip) {
+        var active = chip.getAttribute('data-filter') === lane;
+        if (active) chip.setAttribute('aria-current', 'page');
+        else chip.removeAttribute('aria-current');
+      });
+    })();
+  </script>
+</Base>
