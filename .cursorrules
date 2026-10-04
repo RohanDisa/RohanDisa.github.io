@@ -1,0 +1,7 @@
+You are building a static Astro 5 portfolio. Read SPEC.md before any change.
+- TypeScript strict. Tailwind v4 with the CSS variable tokens in src/styles/global.css; never hardcode colors.
+- Zero client JS unless the component is listed as an island in SPEC.md section 5.
+- Content comes only from src/content and src/data; never hardcode project text in components.
+- Respect prefers-reduced-motion in every animation.
+- No API keys, no runtime network calls, no new dependencies without asking.
+- Never use em dashes in site copy.
